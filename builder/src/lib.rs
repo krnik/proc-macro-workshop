@@ -80,6 +80,19 @@ pub fn derive(input: TokenStream) -> TokenStream {
         }
 
         impl #builder_ident {
+            fn build(&mut self) -> Result<#ident, Box<dyn std::error::Error>> {
+                #(if (self.#field_names.is_none()) {
+                    return Err(format!(
+                        "Field {} is missing",
+                        stringify!(self.#field_names),
+                    ).into());
+                })*
+
+                Ok(#ident {
+                    #(#field_names: self.#field_names.clone().unwrap()),*
+                })
+            }
+
             #(fn #field_names (&mut self, value: #field_types) -> &mut Self {
                 self.#field_names = Some(value);
                 self
