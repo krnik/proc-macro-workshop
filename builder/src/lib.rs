@@ -64,6 +64,10 @@ pub fn derive(input: TokenStream) -> TokenStream {
         .collect::<Vec<_>>();
     let field_types = fields.named
         .iter()
+        .map(|f| f.ty.clone())
+        .collect::<Vec<_>>();
+    let builder_types = fields.named
+        .iter()
         .map(|syn::Field { ty, .. }| parse2::<syn::Type>(quote!(Option<#ty>))
              .unwrap())
         .collect::<Vec<_>>();
@@ -72,7 +76,14 @@ pub fn derive(input: TokenStream) -> TokenStream {
 
     let builder_struct = quote! {
         #vis struct #builder_ident {
-            #(#field_names: #field_types),*
+            #(#field_names: #builder_types),*
+        }
+
+        impl #builder_ident {
+            #(fn #field_names (&mut self, value: #field_types) -> &mut Self {
+                self.#field_names = Some(value);
+                self
+            })*
         }
     };
 
